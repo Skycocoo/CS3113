@@ -24,7 +24,7 @@ bool FlareMap::ReadHeader(std::ifstream &stream) {
 	mapWidth = -1;
 	mapHeight = -1;
 	while(std::getline(stream, line)) {
-		if(line == "") { break; }
+		if (line == "" || line == "\r") { break; }
 		std::istringstream sStream(line);
 		std::string key,value;
 		std::getline(sStream, key, '=');
@@ -38,9 +38,9 @@ bool FlareMap::ReadHeader(std::ifstream &stream) {
 	if(mapWidth == -1 || mapHeight == -1) {
 		return false;
 	} else {
-		mapData = new unsigned int*[mapHeight];
+		mapData = new int*[mapHeight];
 		for(int i = 0; i < mapHeight; ++i) {
-			mapData[i] = new unsigned int[mapWidth];
+			mapData[i] = new int[mapWidth];
 		}
 		return true;
 	}
@@ -49,7 +49,7 @@ bool FlareMap::ReadHeader(std::ifstream &stream) {
 bool FlareMap::ReadLayerData(std::ifstream &stream) {
 	std::string line;
 	while(getline(stream, line)) {
-		if(line == "") { break; }
+		if(line == "" || line == "\r") { break; }
 		std::istringstream sStream(line);
 		std::string key,value;
 		std::getline(sStream, key, '=');
@@ -62,11 +62,18 @@ bool FlareMap::ReadLayerData(std::ifstream &stream) {
 				for(int x=0; x < mapWidth; x++) {
 					std::getline(lineStream, tile, ',');
 					unsigned int val = atoi(tile.c_str());
-					if(val > 0) {
-						mapData[y][x] = val-1;
-					} else {
-						mapData[y][x] = 0;
-					}
+
+					// manage strange value
+					if (val < 0) val = 0;
+
+					// -1: no tile rendering
+					mapData[y][x] = val-1;
+
+					// if(val > 0) {
+					// 	mapData[y][x] = val-1;
+					// } else {
+					// 	mapData[y][x] = 0;
+					// }
 				}
 			}
 		}
@@ -79,7 +86,7 @@ bool FlareMap::ReadEntityData(std::ifstream &stream) {
 	std::string line;
 	std::string type;
 	while(getline(stream, line)) {
-		if(line == "") { break; }
+		if(line == "" || line == "\r") { break; }
 		std::istringstream sStream(line);
 		std::string key,value;
 		getline(sStream, key, '=');
@@ -91,7 +98,7 @@ bool FlareMap::ReadEntityData(std::ifstream &stream) {
 			std::string xPosition, yPosition;
 			getline(lineStream, xPosition, ',');
 			getline(lineStream, yPosition, ',');
-			
+
 			FlareMapEntity newEntity;
 			newEntity.type = type;
 			newEntity.x = std::atoi(xPosition.c_str());
@@ -102,20 +109,20 @@ bool FlareMap::ReadEntityData(std::ifstream &stream) {
 	return true;
 }
 
-void FlareMap::Load(const std::string fileName) {
+void FlareMap::Load(const std::string &fileName) {
 	std::ifstream infile(fileName);
 	if(infile.fail()) {
 		assert(false); // unable to open file
 	}
 	std::string line;
 	while (std::getline(infile, line)) {
-		if(line == "[header]") {
+		if(line == "[header]" || line == "[header]\r") {
 			if(!ReadHeader(infile)) {
 				assert(false); // invalid file data
 			}
-		} else if(line == "[layer]") {
+		} else if(line == "[layer]" || line == "[layer]\r") {
 			ReadLayerData(infile);
-		} else if(line == "[ObjectsLayer]") {
+		} else if(line == "[ObjectsLayer]" || line == "[layer]\r") {
 			ReadEntityData(infile);
 		}
 	}

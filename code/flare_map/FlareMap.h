@@ -13,18 +13,18 @@ class FlareMap {
 	public:
 		FlareMap();
 		~FlareMap();
-	
-		void Load(const std::string fileName);
+
+		void Load(const std::string &fileName);
 
 		int mapWidth;
 		int mapHeight;
-		unsigned int **mapData;
+		int **mapData;
 		std::vector<FlareMapEntity> entities;
-	
+
 	private:
-	
+
 		bool ReadHeader(std::ifstream &stream);
 		bool ReadLayerData(std::ifstream &stream);
 		bool ReadEntityData(std::ifstream &stream);
-	
+
 };
